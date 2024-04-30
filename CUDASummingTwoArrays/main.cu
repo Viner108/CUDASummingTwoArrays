@@ -8,9 +8,9 @@
 
 int main(int argc, char* argv[])
 {
-	//переменные для сравнения времени выполнения функции на GPU и на CPU
+	//variables to compare function execution time on GPU and CPU
 	float timerValueGPU, timerValueCPU;
-	// создание ивентов для начала и конца отчета времени
+	//creating events for the start and end of time reporting
 	cudaEvent_t start, stop;
 	cudaEventCreate(&start);
 	cudaEventCreate(&stop);
@@ -20,22 +20,22 @@ int main(int argc, char* argv[])
 	float *hB;
 	float *dB;
 	float *hC;
-	float *dC;
+	float * dC;
 
-	// колическо данных
+	// amount of data
 	int size = 512 * 50000;
-	// число нитей
+	// number of threads
 	int  N_thread = 512;
-	// число блоков
+	// number of blocks
 	int N_blocks;
 	int i;
-	// количество выделяемой памяти
+	//amount of allocated memory
 	unsigned int mem_size = sizeof(float) * size;
 
 	hA = (float*)malloc(mem_size);
 	hB = (float*)malloc(mem_size);
 	hC = (float*)malloc(mem_size);
-	// hA, hB, hC лежат в оперативной памяти CPU
+	//hA, hB, hC are in the CPU RAM
 
 	cudaError_t err;
 
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "Cannot allocate GPU memory: %s\n", cudaGetErrorString(err));
 		return 1;
 	}
-	//dA, dB, dC в глобальной памяти GPU
+	//dA, dB, dC in GPU global memory
 
 	for ( i = 0; i < size; i++)
 	{
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 	}
 	dim3 blocks(N_blocks);
 
-	//точка отсчета времени
+	//time reference point
 	cudaEventRecord(start, 0);
 	
 	err = cudaMemcpy(dA, hA, mem_size, cudaMemcpyHostToDevice);
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "Cannot copy data host/device : %s\n", cudaGetErrorString(err));
 		return 1;
 	}
-	//hA, hB копируются в dA, dB из оперативной памяти в глобальную
+	//hA, hB are copied to dA, dB from RAM to GPU global memory
 
 	function << < N_blocks,N_thread >> > (dA,dB,dC,size);
 	
@@ -103,31 +103,31 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "Cannot copy data device/host : %s\n", cudaGetErrorString(err));
 		return 1;
 	}
-	//dC копируется в hC с глобальной памяти в оперативную
+	//dC is copied to hC from GPU global memory to RAM
 	 
-	//конец отсчета времени
+	//end of timing
 	cudaEventRecord(stop, 0);
 	cudaEventSynchronize(stop);
-	// сколько в милисекундах занимает расчет на CPU
+	// How many milliseconds does the calculation take on the GPU
 	cudaEventElapsedTime(&timerValueGPU, start, stop);
 	printf("\n GPU calculation time: %f ms\n", timerValueGPU);
-	//точка отсчета времени
+	//time reference point
 	cudaEventRecord(start, 0);
 
 	for ( i = 0; i < size; i++)
 	{
 		hC[i] = hA[i] + hB[i];
 	}
-	// hA, hB, hC лежат в оперативной памяти CPU
+	// hA, hB, hC are in the CPU RAM
 	
-	//конец отсчета времени
+	//end of timing
 	cudaEventRecord(stop, 0);
 	cudaEventSynchronize(stop);
-	// сколько в милисекундах занимает расчет на CPU
+	// How many milliseconds does the calculation take on the CPU
 	cudaEventElapsedTime(&timerValueCPU, start, stop);
 	printf("\n CPU calculation time: %f ms\n", timerValueCPU);
 
-	// во сколько раз быстрее GPU обрабатывает данные чем CPU
+	// How many times faster does the GPU process data than the CPU
 	printf("\n Rate: %f x\n", timerValueCPU / timerValueGPU);
 
 	free(hA);

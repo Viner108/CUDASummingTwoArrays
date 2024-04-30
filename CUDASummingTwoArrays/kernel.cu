@@ -6,7 +6,7 @@
 __global__ void function(float* dA, float *dB, float *dC,int size)
 {
 	int i = blockDim.x * blockIdx.x + threadIdx.x;
-	//если бы число нитей было произвольное то чтобы нити последнего блока не смогли обратиться в недопустимой ячейке памяти
-	//добавлено условие i < size
+	//if the number of threads was arbitrary, then the threads of the last block could not access an invalid memory cell
+	//added condition i < size
 	if (i < size) dC[i] = dA[i] + dB[i];
 }
